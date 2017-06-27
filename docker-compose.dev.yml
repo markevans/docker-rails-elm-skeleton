@@ -1,0 +1,10 @@
+version: "2"
+
+services:
+  web:
+    build: ./web
+    volumes:
+      - ./web:/app
+    ports:
+      - "3000:3000"
+    env_file: dev.env

@@ -1,0 +1,22 @@
+version: "2"
+
+volumes:
+  public_web:
+
+services:
+  nginx:
+    build: ./nginx
+    links:
+      - web
+    ports:
+      - 80:80
+    volumes:
+      - public_web:/public_web
+  web:
+    build:
+      context: ./web
+      args:
+        PRECOMPILE_ASSETS: 1
+    env_file: prod.env
+    volumes:
+      - public_web:/public_web
