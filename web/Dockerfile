@@ -19,11 +19,17 @@ ENV APP_DIR /app
 RUN mkdir $APP_DIR
 WORKDIR $APP_DIR
 
+# Bundler
 COPY Gemfile Gemfile
 COPY Gemfile.lock Gemfile.lock
-
 RUN bundle install
 
+# Yarn
+ADD package.json package.json
+ADD yarn.lock yarn.lock
+RUN yarn install --modules-folder /tmp/node_modules
+
+# Code
 COPY . .
 
 ARG PRECOMPILE_ASSETS
