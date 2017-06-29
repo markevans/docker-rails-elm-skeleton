@@ -12,11 +12,43 @@ def dc(env, args)
   system "docker-compose -f #{config_file} #{args}"
 end
 
+def docker_machines
+  @docker_machines ||= `docker-machine ls -q`.split("\n")
+end
+
+def get_machine_name
+  machines = docker_machines
+  case machines.size
+  when 0
+    puts "There are no docker machines to deploy to"
+    nil
+  when 1
+    machine_name = machines.first
+  else
+    puts "Which machine amigo?"
+    machines.each.with_index do |machine, i|
+      puts "#{i+1}) #{machine}"
+    end
+    number = STDIN.gets.strip.to_i
+    machine_name = machines[number-1]
+  end
+end
+
+def set_docker_env(machine_name)
+  env_commands = `docker-machine env #{machine_name} --shell=cmd`.split("\n")
+  env_commands.each do |cmd|
+    md = cmd.match(/\ASET (.*)=(.*)\Z/)
+    ENV[md[1]] = md[2] if md
+  end
+end
+
 desc "start dev on specified docker machine"
-task :dev => [
-    "docker:set_machine",
-    "dev:up"
-  ] do
+task :dev do
+  machine_name = docker_machines.include?("default") ? "default" : get_machine_name
+  if machine_name
+    set_docker_env(machine_name)
+    Rake::Task["dev:up"].invoke
+  end
 end
 
 desc "deploy to specified docker machine"
@@ -31,34 +63,13 @@ end
 
 namespace :docker do
 
-  def set_docker_env(machine_name)
-    env_commands = `docker-machine env #{machine_name} --shell=cmd`.split("\n")
-    env_commands.each do |cmd|
-      md = cmd.match(/\ASET (.*)=(.*)\Z/)
-      ENV[md[1]] = md[2] if md
-    end
-  end
-
   desc "point docker to the correct machine"
   task :set_machine do
-    machines = `docker-machine ls -q`.split("\n")
-    case machines.size
-    when 0
-      puts "There are no docker machines to deploy to"
-      next
-    when 1
-      machine_name = machines.first
-    else
-      puts "Which machine amigo?"
-      machines.each.with_index do |machine, i|
-        puts "#{i+1}) #{machine}"
-      end
-      number = STDIN.gets.strip.to_i
-      machine_name = machines[number-1]
+    machine_name = get_machine_name
+    if machine_name
+      set_docker_env(machine_name)
+      puts "Docker pointing to #{ENV['DOCKER_MACHINE_NAME']} (#{ENV['DOCKER_HOST']})"
     end
-
-    set_docker_env(machine_name)
-    puts "Docker pointing to #{ENV['DOCKER_MACHINE_NAME']} (#{ENV['DOCKER_HOST']})"
   end
 end
 
