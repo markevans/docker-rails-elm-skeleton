@@ -1,11 +1,15 @@
 version: "2"
 
+volumes:
+  packages:
+
 services:
 
   web:
     build: ./web
     volumes:
       - ./web:/app
+      - packages:/packages
     ports:
       - "3000:3000"
     env_file: dev.env
@@ -16,6 +20,7 @@ services:
     build: ./web
     volumes:
       - ./web:/app
+      - packages:/packages
     ports:
       - "8080:8080"
     env_file: dev.env

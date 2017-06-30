@@ -20,6 +20,7 @@ RUN mkdir $APP_DIR
 WORKDIR $APP_DIR
 
 # Bundler
+ENV BUNDLE_PATH /packages/bundle
 COPY Gemfile Gemfile
 COPY Gemfile.lock Gemfile.lock
 RUN bundle install
@@ -27,7 +28,7 @@ RUN bundle install
 # Yarn
 ADD package.json package.json
 ADD yarn.lock yarn.lock
-RUN yarn install --modules-folder /tmp/node_modules
+RUN yarn install --modules-folder /packages/node_modules
 
 # Code
 COPY . .
